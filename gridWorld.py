@@ -1,8 +1,8 @@
 import numpy as np
 
 # global variables
-BOARD_ROWS = 3
-BOARD_COLS = 4
+BOARD_ROWS = 5
+BOARD_COLS = 5
 WIN_STATE = (0, 3)
 LOSE_STATE = (1, 3)
 START = (2, 0)
@@ -31,19 +31,22 @@ class State:
 
     def nxtPosition(self, action):
         """
-        action: up, down, left, right
+        action: North, South, West, East
         -------------
-        0 | 1 | 2| 3|
+        0 | 1 | 2| 3| 4| 5|
         1 |
         2 |
+        3 |
+        4 |
+        5 |
         return next position
         """
         if self.determine:
-            if action == "up":
+            if action == "North":
                 nxtState = (self.state[0] - 1, self.state[1])
-            elif action == "down":
+            elif action == "South":
                 nxtState = (self.state[0] + 1, self.state[1])
-            elif action == "left":
+            elif action == "West":
                 nxtState = (self.state[0], self.state[1] - 1)
             else:
                 nxtState = (self.state[0], self.state[1] + 1)
@@ -77,7 +80,7 @@ class Agent:
 
     def __init__(self):
         self.states = []
-        self.actions = ["up", "down", "left", "right"]
+        self.actions = ["North", "South", "West", "East"]
         self.State = State()
         self.lr = 0.2
         self.exp_rate = 0.3
