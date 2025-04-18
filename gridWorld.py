@@ -37,7 +37,7 @@ class State:
         elif self.state == LOSE_STATE:
             return -1
         else:
-            return 0
+            return -1  # All other actions result in a -1 reward
 
     def isEndFunc(self):
         if (self.state == WIN_STATE) or (self.state == LOSE_STATE):
@@ -74,8 +74,8 @@ class State:
                 return SPECIAL_JUMP_DESTINATION
                 
             # if next state legal
-            if (nxtState[0] >= 0) and (nxtState[0] <= (BOARD_ROWS -1)):
-                if (nxtState[1] >= 0) and (nxtState[1] <= (BOARD_COLS -1)):
+            if (nxtState[0] >= 0) and (nxtState[0] <= (BOARD_ROWS - 1)):
+                if (nxtState[1] >= 0) and (nxtState[1] <= (BOARD_COLS - 1)):
                     if nxtState not in OBSTACLES:
                         return nxtState
             return self.state
@@ -114,8 +114,6 @@ class Agent:
                 out += token + ' | '
             print(out)
         print('------------------------------------------------\n')
-
-
 
 
     def __init__(self):
@@ -173,11 +171,15 @@ class Agent:
                 self.state_values[self.State.state] = reward  # this is optional
                 print("Game End Reward", reward)
                 # back propagate reward (example update)
+                next_s = self.State.state
                 for s in reversed(self.states):
                     if s in OBSTACLES:
-                        continue  # Skip the obstacle cells
-                    reward = self.state_values[s] + self.lr * (reward - self.state_values[s])
-                    self.state_values[s] = round(reward, 3)
+                        continue
+                    v_current = self.state_values[s]
+                    v_next = self.state_values[next_s]
+                    updated_value = v_current + self.lr * (v_next - v_current)
+                    self.state_values[s] = round(updated_value, 3)
+                    next_s = s  # update for next step
                 self.reset()
                 i += 1
             else:
@@ -219,10 +221,9 @@ class Agent:
         print('----------------------------------')
 
 
-
 if __name__ == "__main__":
     ag = Agent()
     ag.play(50)
     print(ag.showValues())
-    ag.State.showBoard()
+    #ag.State.showBoard()
     ag.showBoardValues()
