@@ -3,9 +3,9 @@ import numpy as np
 # global variables
 BOARD_ROWS = 5
 BOARD_COLS = 5
-WIN_STATE = (0, 3)
+WIN_STATE = (4, 4)
 LOSE_STATE = (1, 3)
-START = (2, 0)
+START = (1, 0)
 DETERMINISTIC = True
 
 
@@ -19,7 +19,7 @@ class State:
 
     def giveReward(self):
         if self.state == WIN_STATE:
-            return 1
+            return 10
         elif self.state == LOSE_STATE:
             return -1
         else:
