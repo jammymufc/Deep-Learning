@@ -4,33 +4,26 @@ from colorama import Fore, Style, init
 init()
 
 # global variables
-BOARD_ROWS = 5
-BOARD_COLS = 5
-WIN_STATE = (4, 4)
+BOARD_ROWS = 3
+BOARD_COLS = 4
+WIN_STATE = (0, 3)
 LOSE_STATE = (1, 3)
-START = (1, 0)
+START = (2, 0)
 DETERMINISTIC = True
-# Added special jump state and destination
-SPECIAL_JUMP_STATE = (1, 3)
-SPECIAL_JUMP_DESTINATION = (3, 3)
-SPECIAL_JUMP_REWARD = 5
 
 
 class State:
     def __init__(self, state=START):
         self.board = np.zeros([BOARD_ROWS, BOARD_COLS])
-        self.board[1,1] = -1
+        # Set the obstacle to -1 (will be displayed as red)
+        self.board[1, 1] = -1
         self.state = state
         self.isEnd = False
         self.determine = DETERMINISTIC
-        # Track if a special jump has occurred in this step
-        self.special_jump_occurred = False
 
     def giveReward(self):
-        if self.special_jump_occurred:
-            return SPECIAL_JUMP_REWARD
-        elif self.state == WIN_STATE:
-            return 10
+        if self.state == WIN_STATE:
+            return 1
         elif self.state == LOSE_STATE:
             return -1
         else:
@@ -42,34 +35,22 @@ class State:
 
     def nxtPosition(self, action):
         """
-        action: North, South, West, East
+        action: up, down, left, right
         -------------
-        0 | 1 | 2| 3| 4| 5|
+        0 | 1 | 2| 3|
         1 |
         2 |
-        3 |
-        4 |
-        5 |
         return next position
         """
-        # Reset special jump flag
-        self.special_jump_occurred = False
-        
         if self.determine:
-            if action == "North":
+            if action == "up":
                 nxtState = (self.state[0] - 1, self.state[1])
-            elif action == "South":
+            elif action == "down":
                 nxtState = (self.state[0] + 1, self.state[1])
-            elif action == "West":
+            elif action == "left":
                 nxtState = (self.state[0], self.state[1] - 1)
             else:
                 nxtState = (self.state[0], self.state[1] + 1)
-            
-            # Check for special jump
-            if self.state == SPECIAL_JUMP_STATE:
-                self.special_jump_occurred = True
-                return SPECIAL_JUMP_DESTINATION
-                
             # if next state legal
             if (nxtState[0] >= 0) and (nxtState[0] <= (BOARD_ROWS -1)):
                 if (nxtState[1] >= 0) and (nxtState[1] <= (BOARD_COLS -1)):
@@ -93,13 +74,14 @@ class State:
         print('-----------------')
 
 
+
 # Agent of player
 
 class Agent:
 
     def __init__(self):
         self.states = []
-        self.actions = ["North", "South", "West", "East"]
+        self.actions = ["up", "down", "left", "right"]
         self.State = State()
         self.lr = 0.2
         self.exp_rate = 0.3
@@ -129,11 +111,7 @@ class Agent:
 
     def takeAction(self, action):
         position = self.State.nxtPosition(action)
-        # Create new state with position
-        new_state = State(state=position)
-        # Pass the special jump flag from the current state
-        new_state.special_jump_occurred = self.State.special_jump_occurred
-        return new_state
+        return State(state=position)
 
     def reset(self):
         self.states = []
@@ -157,31 +135,14 @@ class Agent:
             else:
                 action = self.chooseAction()
                 # append trace
-                next_position = self.State.nxtPosition(action)
-                self.states.append(next_position)
-                print("current position {} action {}".format(self.State.state, action))
-                
-                # Check if special jump will occur
-                special_jump = self.State.state == SPECIAL_JUMP_STATE
-                if special_jump:
-                    print("SPECIAL JUMP: [1,3] -> [3,3] with reward +5")
-                
+                self.states.append(self.State.nxtPosition(action))
+                #print("current position {} action {}".format(self.State.state, action))
                 # by taking the action, it reaches the next state
                 self.State = self.takeAction(action)
-                
-                # If a special jump occurred, add the reward immediately
-                if self.State.special_jump_occurred:
-                    # Get the previous state
-                    prev_state = self.states[-1]
-                    # Update its value with the special jump reward
-                    current_value = self.state_values[prev_state]
-                    self.state_values[prev_state] = current_value + self.lr * (SPECIAL_JUMP_REWARD - current_value)
-                    self.state_values[prev_state] = round(self.state_values[prev_state], 3)
-                
                 # mark is end
                 self.State.isEndFunc()
-                print("nxt state", self.State.state)
-                print("---------------------")
+                #print("nxt state", self.State.state)
+                #print("---------------------")
 
     def showValues(self):
         for i in range(0, BOARD_ROWS):
@@ -191,6 +152,10 @@ class Agent:
                 out += str(self.state_values[(i, j)]).ljust(6) + ' | '
             print(out)
         print('----------------------------------')
+        print("Normal text")
+        print(Fore.RED + "This should be red" + Style.RESET_ALL)
+        print("Back to normal")
+    
 
 
 if __name__ == "__main__":
