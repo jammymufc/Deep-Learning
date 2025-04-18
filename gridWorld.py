@@ -83,18 +83,20 @@ class State:
 
     def showBoard(self):
         for i in range(BOARD_ROWS):
-            print('-----------------')
+            print('---------------------')
             out = '| '
             for j in range(BOARD_COLS):
                 if (i, j) == self.state:
-                    token = '*'
-                elif (i, j) == (1, 1):
+                    token = Fore.GREEN + '*' + Style.RESET_ALL
+                elif (i, j) in OBSTACLES:
                     token = Fore.RED + 'X' + Style.RESET_ALL
+                elif (i, j) == (4, 4):
+                    token = Fore.CYAN + '#' + Style.RESET_ALL
                 else:
                     token = '0'
                 out += token + ' | '
             print(out)
-        print('-----------------')
+        print('---------------------')
 
 
 # Agent of player
@@ -225,5 +227,5 @@ if __name__ == "__main__":
     ag = Agent()
     ag.play(50)
     print(ag.showValues())
-    #ag.State.showBoard()
+    ag.State.showBoard()
     ag.showBoardValues()
