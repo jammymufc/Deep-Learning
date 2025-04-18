@@ -10,6 +10,7 @@ WIN_STATE = (4, 4)
 LOSE_STATE = (1, 3)
 START = (1, 0)
 DETERMINISTIC = True
+OBSTACLES = [(2, 2), (2, 3), (2, 4), (3, 2)]
 # Added special jump state and destination
 SPECIAL_JUMP_STATE = (1, 3)
 SPECIAL_JUMP_DESTINATION = (3, 3)
@@ -19,10 +20,12 @@ SPECIAL_JUMP_REWARD = 5
 class State:
     def __init__(self, state=START):
         self.board = np.zeros([BOARD_ROWS, BOARD_COLS])
-        self.board[1,1] = -1
+        for obs in OBSTACLES:
+            self.board[obs] = -1
         self.state = state
         self.isEnd = False
         self.determine = DETERMINISTIC
+
         # Track if a special jump has occurred in this step
         self.special_jump_occurred = False
 
@@ -73,9 +76,10 @@ class State:
             # if next state legal
             if (nxtState[0] >= 0) and (nxtState[0] <= (BOARD_ROWS -1)):
                 if (nxtState[1] >= 0) and (nxtState[1] <= (BOARD_COLS -1)):
-                    if nxtState != (1, 1):
+                    if nxtState not in OBSTACLES:
                         return nxtState
             return self.state
+
 
     def showBoard(self):
         for i in range(BOARD_ROWS):
@@ -96,6 +100,23 @@ class State:
 # Agent of player
 
 class Agent:
+    
+    def showBoardValues(self):
+        print("\nLearned State Values:\n")
+        for i in range(BOARD_ROWS):
+            print('------------------------------------------------')
+            out = '| '
+            for j in range(BOARD_COLS):
+                if (i, j) in OBSTACLES:
+                    token = Fore.RED + '  X   ' + Style.RESET_ALL
+                else:
+                    token = "{:<6.2f}".format(self.state_values.get((i, j), 0))
+                out += token + ' | '
+            print(out)
+        print('------------------------------------------------\n')
+
+
+
 
     def __init__(self):
         self.states = []
@@ -108,7 +129,9 @@ class Agent:
         self.state_values = {}
         for i in range(BOARD_ROWS):
             for j in range(BOARD_COLS):
-                self.state_values[(i, j)] = 0  # set initial value to 0
+                if (i, j) not in OBSTACLES:
+                    self.state_values[(i, j)] = 0
+
 
     def chooseAction(self):
         # choose action with most expected value
@@ -149,7 +172,10 @@ class Agent:
                 # explicitly assign end state to reward values
                 self.state_values[self.State.state] = reward  # this is optional
                 print("Game End Reward", reward)
+                # back propagate reward (example update)
                 for s in reversed(self.states):
+                    if s in OBSTACLES:
+                        continue  # Skip the obstacle cells
                     reward = self.state_values[s] + self.lr * (reward - self.state_values[s])
                     self.state_values[s] = round(reward, 3)
                 self.reset()
@@ -188,9 +214,10 @@ class Agent:
             print('----------------------------------')
             out = '| '
             for j in range(0, BOARD_COLS):
-                out += str(self.state_values[(i, j)]).ljust(6) + ' | '
+                out += str(self.state_values.get((i, j), 0)).ljust(6) + ' | '
             print(out)
         print('----------------------------------')
+
 
 
 if __name__ == "__main__":
@@ -198,3 +225,4 @@ if __name__ == "__main__":
     ag.play(50)
     print(ag.showValues())
     ag.State.showBoard()
+    ag.showBoardValues()
