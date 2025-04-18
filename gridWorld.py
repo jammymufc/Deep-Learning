@@ -93,7 +93,7 @@ class State:
                 elif (i, j) == (4, 4):
                     token = Fore.CYAN + '#' + Style.RESET_ALL
                 else:
-                    token = '0'
+                    token = Fore.YELLOW + '-' + Style.RESET_ALL
                 out += token + ' | '
             print(out)
         print('---------------------')
@@ -111,6 +111,10 @@ class Agent:
             for j in range(BOARD_COLS):
                 if (i, j) in OBSTACLES:
                     token = Fore.RED + '  X   ' + Style.RESET_ALL
+                elif (i, j) == START:
+                    token = Fore.GREEN + "{:<6.2f}".format(self.state_values.get((i, j), 0)) + Style.RESET_ALL
+                elif (i, j) == WIN_STATE:
+                    token = Fore.CYAN + "{:<6.2f}".format(self.state_values.get((i, j), 0)) + Style.RESET_ALL
                 else:
                     token = "{:<6.2f}".format(self.state_values.get((i, j), 0))
                 out += token + ' | '
