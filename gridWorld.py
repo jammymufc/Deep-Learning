@@ -7,7 +7,7 @@ init()
 BOARD_ROWS = 5
 BOARD_COLS = 5
 WIN_STATE = (4, 4)
-LOSE_STATE = (1, 3)
+#LOSE_STATE = (1, 3)
 START = (1, 0)
 DETERMINISTIC = True
 OBSTACLES = [(2, 2), (2, 3), (2, 4), (3, 2)]
@@ -34,13 +34,13 @@ class State:
             return SPECIAL_JUMP_REWARD
         elif self.state == WIN_STATE:
             return 10
-        elif self.state == LOSE_STATE:
-            return -1
+        #elif self.state == LOSE_STATE:
+            #return -1
         else:
             return -1  # All other actions result in a -1 reward
 
     def isEndFunc(self):
-        if (self.state == WIN_STATE) or (self.state == LOSE_STATE):
+        if (self.state == WIN_STATE):
             self.isEnd = True
 
     def nxtPosition(self, action):
@@ -202,15 +202,15 @@ class Agent:
                 
                 # by taking the action, it reaches the next state
                 self.State = self.takeAction(action)
-                
-                # If a special jump occurred, add the reward immediately
-                if self.State.special_jump_occurred:
-                    # Get the previous state
-                    prev_state = self.states[-1]
-                    # Update its value with the special jump reward
-                    current_value = self.state_values[prev_state]
-                    self.state_values[prev_state] = current_value + self.lr * (SPECIAL_JUMP_REWARD - current_value)
-                    self.state_values[prev_state] = round(self.state_values[prev_state], 3)
+
+                # Immediate TD update after action
+                reward = self.State.giveReward()
+                prev_state = self.states[-1]
+                if prev_state not in OBSTACLES:
+                    v_current = self.state_values[prev_state]
+                    v_next = self.state_values[self.State.state]
+                    updated_value = v_current + self.lr * (reward + v_next - v_current)
+                    self.state_values[prev_state] = round(updated_value, 3)
                 
                 # mark is end
                 self.State.isEndFunc()
