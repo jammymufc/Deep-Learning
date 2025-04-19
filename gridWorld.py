@@ -78,7 +78,7 @@ class State:
                 if (nxtState[1] >= 0) and (nxtState[1] <= (BOARD_COLS - 1)):
                     if nxtState not in OBSTACLES:
                         return nxtState
-            return self.state
+        return self.state
 
 
     def showBoard(self):
@@ -92,6 +92,8 @@ class State:
                     token = Fore.RED + 'X' + Style.RESET_ALL
                 elif (i, j) == (4, 4):
                     token = Fore.CYAN + '#' + Style.RESET_ALL
+                elif (i, j) == (1, 3):
+                    token = Fore.MAGENTA + 'J' + Style.RESET_ALL
                 else:
                     token = Fore.YELLOW + '-' + Style.RESET_ALL
                 out += token + ' | '
@@ -115,6 +117,8 @@ class Agent:
                     token = Fore.GREEN + "{:<6.2f}".format(self.state_values.get((i, j), 0)) + Style.RESET_ALL
                 elif (i, j) == WIN_STATE:
                     token = Fore.CYAN + "{:<6.2f}".format(self.state_values.get((i, j), 0)) + Style.RESET_ALL
+                elif (i, j) == SPECIAL_JUMP_STATE:
+                    token = Fore.MAGENTA + "{:<6.2f}".format(self.state_values.get((i, j), 0)) + Style.RESET_ALL
                 else:
                     token = "{:<6.2f}".format(self.state_values.get((i, j), 0))
                 out += token + ' | '
@@ -126,7 +130,7 @@ class Agent:
         self.states = []
         self.actions = ["North", "South", "West", "East"]
         self.State = State()
-        self.lr = 0.2
+        self.lr = 0.20
         self.exp_rate = 0.3
 
         # initial state reward
