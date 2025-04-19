@@ -1,5 +1,6 @@
 import numpy as np
 from colorama import Fore, Style, init
+import matplotlib.pyplot as plt
 
 init()
 
@@ -130,7 +131,7 @@ class Agent:
         self.states = []
         self.actions = ["North", "South", "West", "East"]
         self.State = State()
-        self.lr = 0.20
+        self.lr = 0.22
         self.exp_rate = 0.3
 
         # initial state reward
@@ -230,6 +231,46 @@ class Agent:
             print(out)
         print('----------------------------------')
 
+    def plotStateValues(self):
+        grid = np.zeros((BOARD_ROWS, BOARD_COLS))
+        mask = np.zeros_like(grid, dtype=bool)
+
+        for i in range(BOARD_ROWS):
+            for j in range(BOARD_COLS):
+                if (i, j) in OBSTACLES:
+                    grid[i, j] = np.nan  # Show obstacles as blank
+                    mask[i, j] = True
+                else:
+                    grid[i, j] = self.state_values.get((i, j), 0)
+
+        fig, ax = plt.subplots(figsize=(8, 6))
+        cmap = plt.get_cmap('viridis')
+        cmap.set_bad(color='black')  # For obstacles
+
+        c = ax.imshow(grid, cmap=cmap, interpolation='nearest', origin='lower')
+
+        # Annotate cells
+        for i in range(BOARD_ROWS):
+            for j in range(BOARD_COLS):
+                if not mask[i, j]:
+                    val = grid[i, j]
+                    ax.text(j, i, "{:.1f}".format(val), ha='center', va='center', color='white')
+                else:
+                    ax.text(j, i, "X", ha='center', va='center', color='red')
+
+        # Special markers
+        #ax.text(START[1], START[0], "S", ha='center', va='center', color='lime', fontweight='bold')
+        #ax.text(WIN_STATE[1], WIN_STATE[0], "G", ha='center', va='center', color='cyan', fontweight='bold')
+        #ax.text(SPECIAL_JUMP_STATE[1], SPECIAL_JUMP_STATE[0], "J", ha='center', va='center', color='magenta',
+                #fontweight='bold')
+
+        ax.set_title("Learned State Values Heatmap")
+        ax.set_xticks(np.arange(BOARD_COLS))
+        ax.set_yticks(np.arange(BOARD_ROWS))
+        ax.invert_yaxis()
+        plt.colorbar(c, ax=ax)
+        plt.tight_layout()
+        plt.show()
 
 if __name__ == "__main__":
     ag = Agent()
@@ -237,3 +278,4 @@ if __name__ == "__main__":
     print(ag.showValues())
     ag.State.showBoard()
     ag.showBoardValues()
+    ag.plotStateValues()
