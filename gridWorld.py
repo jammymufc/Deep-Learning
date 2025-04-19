@@ -278,11 +278,9 @@ class Agent:
 def plot_value_grid(values, obstacles, title="Value Grid"):
     grid = np.zeros((BOARD_ROWS, BOARD_COLS))
     mask = np.zeros((BOARD_ROWS, BOARD_COLS), dtype=bool)
+    bg_colors = np.ones((BOARD_ROWS, BOARD_COLS, 3))  # All white
 
-    # Base background: all white
-    bg_colors = np.ones((BOARD_ROWS, BOARD_COLS, 3))
-
-    # Special tiles
+    # Set special squares
     for i in range(BOARD_ROWS):
         for j in range(BOARD_COLS):
             if (i, j) == START:
@@ -290,27 +288,30 @@ def plot_value_grid(values, obstacles, title="Value Grid"):
             elif (i, j) == WIN_STATE:
                 bg_colors[i, j] = [0, 1, 1]  # Cyan
             elif (i, j) == SPECIAL_JUMP_STATE:
-                bg_colors[i, j] = [1, 0, 1]  # Magenta
+                bg_colors[i, j] = [1, 0, 1]  # Magenta (stay pure magenta)
 
-    # Mark obstacles
+    # Set obstacle colors
     for i, j in obstacles:
         mask[i, j] = True
         bg_colors[i, j] = [0, 0, 0]  # Pure black
 
-    # Fill value grid
+    # Build the value grid
     for (i, j), val in values.items():
         grid[i, j] = val
 
     fig, ax = plt.subplots(figsize=(8, 6))
+    ax.imshow(bg_colors, origin='upper')
 
-    # Background layer: white/specials/black
-    ax.imshow(bg_colors, origin='lower')
+    # Create a mask to exclude special and obstacle squares from heatmap overlay
+    heatmap_mask = np.zeros_like(grid, dtype=bool)
+    for i, j in obstacles + [START, WIN_STATE, SPECIAL_JUMP_STATE]:
+        heatmap_mask[i, j] = True
+    grid_masked = np.ma.masked_array(grid, mask=heatmap_mask)
 
-    # Heatmap: white to cyan (transparent over obstacles)
-    cmap = mcolors.LinearSegmentedColormap.from_list("white_to_cyan", ["#ffffff", "#00ffff"])
-    norm = mcolors.Normalize(vmin=np.min(grid), vmax=np.max(grid))
-    masked_grid = np.ma.masked_where(mask, grid)
-    heat = ax.imshow(masked_grid, cmap=cmap, norm=norm, origin='upper', alpha=0.6)
+    # Heatmap (cyan-tinted)
+    cmap = mcolors.LinearSegmentedColormap.from_list("custom_cmap", ["white", "cyan"])
+    ax.imshow(grid_masked, cmap=cmap, interpolation='nearest', origin='upper',
+              vmin=np.min(grid), vmax=np.max(grid), alpha=0.6)
 
     # Add text
     for i in range(BOARD_ROWS):
@@ -325,19 +326,15 @@ def plot_value_grid(values, obstacles, title="Value Grid"):
     # Grid lines
     ax.set_xticks(np.arange(BOARD_COLS))
     ax.set_yticks(np.arange(BOARD_ROWS))
-    ax.set_xticklabels(np.arange(BOARD_COLS))
-    ax.set_yticklabels(np.arange(BOARD_ROWS))
     ax.set_xticks(np.arange(-0.5, BOARD_COLS, 1), minor=True)
     ax.set_yticks(np.arange(-0.5, BOARD_ROWS, 1), minor=True)
     ax.grid(which='minor', color='gray', linestyle='-', linewidth=1)
     ax.tick_params(which='major', length=0)
 
-    # Colorbar
-    cbar = plt.colorbar(ScalarMappable(norm=norm, cmap=cmap), ax=ax, label='State Value')
-
     ax.set_title(title)
     plt.tight_layout()
     plt.show()
+
 
 
 
