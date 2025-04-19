@@ -1,6 +1,8 @@
 import numpy as np
 from colorama import Fore, Style, init
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+from matplotlib.cm import ScalarMappable
 
 init()
 
@@ -131,7 +133,7 @@ class Agent:
         self.states = []
         self.actions = ["North", "South", "West", "East"]
         self.State = State()
-        self.lr = 0.22
+        self.lr = 0.23
         self.exp_rate = 0.3
 
         # initial state reward
@@ -272,10 +274,79 @@ class Agent:
         plt.tight_layout()
         plt.show()
 
+
+def plot_value_grid(values, obstacles, title="Value Grid"):
+    grid = np.zeros((BOARD_ROWS, BOARD_COLS))
+    mask = np.zeros((BOARD_ROWS, BOARD_COLS), dtype=bool)
+
+    # Base background: all white
+    bg_colors = np.ones((BOARD_ROWS, BOARD_COLS, 3))
+
+    # Special tiles
+    for i in range(BOARD_ROWS):
+        for j in range(BOARD_COLS):
+            if (i, j) == START:
+                bg_colors[i, j] = [0, 1, 0]  # Green
+            elif (i, j) == WIN_STATE:
+                bg_colors[i, j] = [0, 1, 1]  # Cyan
+            elif (i, j) == SPECIAL_JUMP_STATE:
+                bg_colors[i, j] = [1, 0, 1]  # Magenta
+
+    # Mark obstacles
+    for i, j in obstacles:
+        mask[i, j] = True
+        bg_colors[i, j] = [0, 0, 0]  # Pure black
+
+    # Fill value grid
+    for (i, j), val in values.items():
+        grid[i, j] = val
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    # Background layer: white/specials/black
+    ax.imshow(bg_colors, origin='lower')
+
+    # Heatmap: white to cyan (transparent over obstacles)
+    cmap = mcolors.LinearSegmentedColormap.from_list("white_to_cyan", ["#ffffff", "#00ffff"])
+    norm = mcolors.Normalize(vmin=np.min(grid), vmax=np.max(grid))
+    masked_grid = np.ma.masked_where(mask, grid)
+    heat = ax.imshow(masked_grid, cmap=cmap, norm=norm, origin='upper', alpha=0.6)
+
+    # Add text
+    for i in range(BOARD_ROWS):
+        for j in range(BOARD_COLS):
+            if mask[i, j]:
+                ax.text(j, i, 'X', va='center', ha='center', color='red', fontweight='bold')
+            else:
+                val = grid[i, j]
+                ax.text(j, i, '{:.2f}'.format(val), va='center', ha='center',
+                        color='black', fontweight='bold')
+
+    # Grid lines
+    ax.set_xticks(np.arange(BOARD_COLS))
+    ax.set_yticks(np.arange(BOARD_ROWS))
+    ax.set_xticklabels(np.arange(BOARD_COLS))
+    ax.set_yticklabels(np.arange(BOARD_ROWS))
+    ax.set_xticks(np.arange(-0.5, BOARD_COLS, 1), minor=True)
+    ax.set_yticks(np.arange(-0.5, BOARD_ROWS, 1), minor=True)
+    ax.grid(which='minor', color='gray', linestyle='-', linewidth=1)
+    ax.tick_params(which='major', length=0)
+
+    # Colorbar
+    cbar = plt.colorbar(ScalarMappable(norm=norm, cmap=cmap), ax=ax, label='State Value')
+
+    ax.set_title(title)
+    plt.tight_layout()
+    plt.show()
+
+
+
 if __name__ == "__main__":
     ag = Agent()
     ag.play(50)
     print(ag.showValues())
     ag.State.showBoard()
     ag.showBoardValues()
-    ag.plotStateValues()
+    #ag.plotStateValues()
+    plot_value_grid(ag.state_values, OBSTACLES)
+
